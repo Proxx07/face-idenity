@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { Button, InputNumber, InputText } from 'primevue';
 import { useI18n } from 'vue-i18n';
+import LangSwitcher from '@/components/UI/LangSwitcher.vue';
 import { $confirm } from '@/plugins/confirmation.ts';
 
 const { t } = useI18n();
 
 const defaultConfirm = async () => {
-  const result = await $confirm.default({ title: 'Confirmation title', subtitle: 'Are you sure to do smth bla bla bla bla bla?' });
+  const result = await $confirm.default({ title: 'Confirmation title', subtitle: `Are you sure to do smth? ${t('hello')}` });
   if (result) {
     console.log('Do smth after accept.');
   }
@@ -29,14 +30,14 @@ const errorConfirm = async () => {
   await $confirm.error({ title: 'Error confirm', subtitle: 'Error confirmation subtitle' });
   console.log('After button click. Error');
 };
-
-const test = t('hello');
 </script>
 
 <template>
   <div class="page">
+    <LangSwitcher />
+    {{ $tl('page.example', { name: '123' }) }}
     <h1>
-      {{ $tl('hello') }} {{ $tl('page-name') }} | {{ test }}
+      {{ $tl('hello') }}
     </h1>
     <hr>
 
@@ -49,6 +50,7 @@ const test = t('hello');
     <Button label="Secondary large" size="large" severity="secondary" />
 
     <hr>
+
     <Button label="Default confirmation" severity="warn" @click="defaultConfirm" />
     <Button label="Info confirmation" severity="info" @click="infoConfirm" />
     <Button label="Success confirmation" severity="success" @click="successConfirm" />
