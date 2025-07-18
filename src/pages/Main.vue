@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Button, InputNumber, InputText } from 'primevue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { marker } from '@/assets/icons';
 import LangSwitcher from '@/components/UI/LangSwitcher.vue';
 import { $confirm } from '@/plugins/confirmation.ts';
 
@@ -30,6 +32,19 @@ const errorConfirm = async () => {
   await $confirm.error({ title: 'Error confirm', subtitle: 'Error confirmation subtitle' });
   console.log('After button click. Error');
 };
+
+let interval: NodeJS.Timeout;
+const loading = ref(true);
+
+onMounted(() => {
+  interval = setInterval(() => {
+    loading.value = !loading.value;
+  }, 3000);
+});
+
+onBeforeUnmount(() => {
+  clearInterval(interval);
+});
 </script>
 
 <template>
@@ -48,6 +63,12 @@ const errorConfirm = async () => {
     <Button label="Secondary small" size="small" severity="secondary" />
     <Button label="Secondary" severity="secondary" />
     <Button label="Secondary large" size="large" severity="secondary" />
+
+    <hr>
+
+    <Button label="svg icon" size="large" :icon="marker" severity="success" />
+    <Button label="Check icon fill" size="large" :icon="marker" icon-pos="right" severity="info" icon-class="no-fill" />
+    <Button label="Loading test" severity="help" size="large" :loading="loading" />
 
     <hr>
 

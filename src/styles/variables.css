@@ -48,7 +48,9 @@ html {
     --tg-viewport-height: 100dvh;
     --tg-viewport-stable-height: 100dvh;
 }
-
+.font-none {
+    font-size: 0 !important;
+}
 .font-10-r {
     font: var(--font-10-r) !important;
 }

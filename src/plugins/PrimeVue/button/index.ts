@@ -31,17 +31,18 @@ export const buttonConfig = (): ButtonDesignTokens => {
   };
 };
 
-export const buttonPt = (instance?: VNode<RendererNode, RendererElement, ButtonProps>): ButtonPassThroughOptions => {
-  if (!instance || !instance.props?.size) {
-    return {
-      root: {
-        class: 'font-14-b',
-      },
-    };
-  }
+export const buttonPt = (instance: VNode<RendererNode, RendererElement, ButtonProps>): ButtonPassThroughOptions => {
   return {
     root: {
-      class: instance.props.size === 'small' ? 'font-12-r' : 'font-18-b',
+      class: !instance.props?.size ? 'font-14-b' : instance.props.size === 'small' ? 'font-12-r' : 'font-18-b',
+    },
+
+    icon: {
+      ...((instance.props?.icon && instance.props?.icon.includes('<svg')) && {
+        innerHTML: instance.props?.icon,
+        classList: `p-button-icon-svg p-button-icon-${instance.props?.iconPos || 'left'} ${instance.props?.iconClass || ''}`,
+      }),
+      ...((instance.props?.icon && !instance.props?.icon.includes('<svg')) && { class: instance.props?.icon }),
     },
   };
 };
