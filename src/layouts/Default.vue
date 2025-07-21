@@ -3,10 +3,14 @@
 
 <template>
   <div class="app-inner">
-    <div class="site-content">
-      <slot />
-    </div>
+    <slot />
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.app-inner {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+}
+</style>

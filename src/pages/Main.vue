@@ -1,87 +1,84 @@
 <script setup lang="ts">
-import { Button, InputNumber, InputText } from 'primevue';
+import { Button } from 'primevue';
 import { ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { marker } from '@/assets/icons';
-import LangSwitcher from '@/components/UI/LangSwitcher.vue';
-import { $confirm } from '@/plugins/confirmation.ts';
+import { reload } from '@/assets/icons';
+import FaceId from '@/components/FaceId/index.vue';
 
-const { t } = useI18n();
+const restartVideoSourceCount = ref(0);
+const faceIdActive = ref(true);
+const videoError = ref(false);
+const photoChecking = ref(false);
 
-const defaultConfirm = async () => {
-  const result = await $confirm.default({ title: 'Confirmation title', subtitle: `Are you sure to do smth? ${t('hello')}` });
-  if (result) {
-    console.log('Do smth after accept.');
+const responseStatus = ref<string>('');
+
+const handlePhoto = (image: string) => {
+  photoChecking.value = true;
+
+  const link = document.createElement('a');
+  link.href = image;
+  link.download = 'photo.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  responseStatus.value = 'success';
+  photoChecking.value = false;
+};
+const restartVideo = (manual: boolean) => {
+  faceIdActive.value = false;
+  if (manual) responseStatus.value = '';
+  if (!manual && restartVideoSourceCount.value === 3) {
+    videoError.value = true;
   }
   else {
-    console.log('Do smth after reject.');
+    setTimeout(() => {
+      faceIdActive.value = true;
+      restartVideoSourceCount.value = manual ? 0 : restartVideoSourceCount.value + 1;
+    });
   }
 };
-
-const infoConfirm = async () => {
-  await $confirm.info({ title: 'Info confirmation', subtitle: 'Info confirmation subtitle' });
-  console.log('After button click. Info');
+const reloadPage = () => {
+  document.location.reload();
 };
-
-const successConfirm = async () => {
-  await $confirm.success({ title: 'Success confirm', subtitle: 'Success confirmation subtitle' });
-  console.log('After button click. Success');
-};
-
-const errorConfirm = async () => {
-  await $confirm.error({ title: 'Error confirm', subtitle: 'Error confirmation subtitle' });
-  console.log('After button click. Error');
-};
-
-const loading = ref(true);
 </script>
 
 <template>
-  <div class="page">
-    <LangSwitcher />
-    {{ $tl('page.example', { name: '123' }) }}
-    <h1>
-      {{ $tl('hello') }}
-    </h1>
-    <hr>
+  <div class="main-page">
+    <FaceId
+      v-if="faceIdActive && !videoError"
+      :loading="photoChecking"
+      :response-status="responseStatus"
+      @restart="restartVideo"
+      @photo-taken="handlePhoto"
+    />
+    <div v-if="videoError" class="error-wrapper">
+      <h3>
+        Не удалось запустить камеру. <br> Попбробуйте обновить страницу.
+      </h3>
 
-    <Button label="Primary small" size="small" />
-    <Button label="Primary" />
-    <Button label="Primary large" size="large" />
-
-    <Button label="Secondary small" size="small" severity="secondary" />
-    <Button label="Secondary" severity="secondary" />
-    <Button label="Secondary large" size="large" severity="secondary" />
-
-    <hr>
-
-    <Button label="svg icon" size="large" :icon="marker" severity="success" />
-    <Button label="Check icon fill" size="large" :icon="marker" icon-pos="right" severity="info" icon-class="no-fill" />
-    <Button label="Loading test" severity="help" size="large" :loading="loading" />
-
-    <hr>
-
-    <Button label="Default confirmation" severity="warn" @click="defaultConfirm" />
-    <Button label="Info confirmation" severity="info" @click="infoConfirm" />
-    <Button label="Success confirmation" severity="success" @click="successConfirm" />
-    <Button label="Error confirmation" severity="danger" @click="errorConfirm" />
-  </div>
-
-  <div style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
-    <InputText fluid placeholder="Search" />
-    <InputNumber />
+      <Button severity="primary" label="Обновить" size="large" :icon="reload" icon-pos="right" @click="reloadPage" />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.page {
+.main-page {
+  flex-grow: 1;
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+  background: var(--secondary-500);
+}
+
+.error-wrapper {
+  flex-grow: 1;
+  display: flex;
   align-items: center;
-  padding: 1rem;
-  hr {
-    width: 100%;
+  justify-content: center;
+  gap: 1rem;
+  flex-direction: column;
+  h3 {
+    font: var(--font-24-b);
+    text-align: center;
+    line-height: 1.2;
   }
 }
 </style>

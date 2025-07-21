@@ -7,6 +7,7 @@ export default antfu({
     'antfu/if-newline': 'off',
     'antfu/consistent-list-newline': 'off',
     'no-unused-vars': 'warn',
+    'vue/custom-event-name-casing': ['error', 'kebab-case'],
     'antfu/top-level-function': 'off',
   },
 
