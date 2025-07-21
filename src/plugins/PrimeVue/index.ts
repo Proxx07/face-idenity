@@ -1,4 +1,6 @@
+import type { ButtonProps } from 'primevue/button';
 import type { PrimeVueConfiguration } from 'primevue/config';
+import type { RendererElement, RendererNode, VNode } from 'vue';
 import { definePreset } from '@primeuix/styled';
 import Aura from '@primeuix/themes/aura';
 import { inputFieldPt } from '@/plugins/PrimeVue/input';
@@ -112,7 +114,7 @@ export const options: PrimeVueConfiguration = {
   ripple: true,
 
   pt: {
-    button(instance) {
+    button(instance: VNode<RendererNode, RendererElement, ButtonProps>) {
       return buttonPt(instance);
     },
 

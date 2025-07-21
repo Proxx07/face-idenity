@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button, InputNumber, InputText } from 'primevue';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { marker } from '@/assets/icons';
 import LangSwitcher from '@/components/UI/LangSwitcher.vue';
@@ -33,18 +33,7 @@ const errorConfirm = async () => {
   console.log('After button click. Error');
 };
 
-let interval: NodeJS.Timeout;
 const loading = ref(true);
-
-onMounted(() => {
-  interval = setInterval(() => {
-    loading.value = !loading.value;
-  }, 3000);
-});
-
-onBeforeUnmount(() => {
-  clearInterval(interval);
-});
 </script>
 
 <template>
