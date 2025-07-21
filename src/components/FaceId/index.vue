@@ -68,6 +68,7 @@ onMounted(() => {
   opacity: 0;
 }
 
+.canvas-overlay,
 .video-feed {
   position: absolute;
   top: 50%;

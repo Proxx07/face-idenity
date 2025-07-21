@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from 'primevue';
-import { ref } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { reload } from '@/assets/icons';
 import FaceId from '@/components/FaceId/index.vue';
 
@@ -40,6 +40,11 @@ const restartVideo = (manual: boolean) => {
 const reloadPage = () => {
   document.location.reload();
 };
+
+onBeforeMount(() => {
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+});
 </script>
 
 <template>
@@ -66,6 +71,7 @@ const reloadPage = () => {
   flex-grow: 1;
   display: flex;
   background: var(--secondary-500);
+  width: 100%;
 }
 
 .error-wrapper {
