@@ -1,7 +1,7 @@
 import type { IEmits, IProps, TStatus } from './types';
 import * as faceapi from 'face-api.js';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { getCenter, getDistance, TOLERANCE } from './models';
+import { constraints, getCenter, getDistance, TOLERANCE } from './models';
 
 export const useFaceID = (_: IProps, emit: IEmits) => {
   let interval: ReturnType<typeof setInterval>;
@@ -149,16 +149,19 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     }
   };
 
+  const data = ref();
   const faceIdInit = async () => {
     try {
       await faceapi.nets.tinyFaceDetector.loadFromUri('/cv-models');
       await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/cv-models');
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      data.value = constraints;
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (!video.value) return;
       video.value.srcObject = stream;
 
       video.value.onloadeddata = () => {
+        data.value = { constrain: data.value, video: { width: video.value?.videoWidth, height: video.value?.videoHeight } };
         if (!overlay.value) return;
         overlay.value.width = video.value!.clientWidth;
         overlay.value.height = video.value!.clientHeight;
@@ -195,5 +198,6 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     progressValue,
     loading,
     faceIdInit,
+    data,
   };
 };

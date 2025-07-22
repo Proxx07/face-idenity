@@ -9,7 +9,7 @@ import { useFaceID } from '@/composables/useFaceID';
 const props = defineProps<IProps>();
 const emit = defineEmits<IEmits>();
 
-const { video, overlay, status, loading: faceIdInitializing, progressValue, faceIdInit } = useFaceID(props, emit);
+const { video, overlay, status, loading: faceIdInitializing, progressValue, faceIdInit, data } = useFaceID(props, emit);
 
 const messageSeverity = computed<MessageProps['severity']>(() => {
   if (faceIdInitializing.value) return 'info';
@@ -29,8 +29,11 @@ onMounted(() => {
     <div class="target-box">
       <div class="status-wrapper">
         <Message v-if="!props.responseStatus" :severity="messageSeverity" class="message">
-          <div class="font-18-b">
+          <div class="font-18-b" style="min-height: 36px">
             {{ faceIdInitializing ? $tl('loading') : $tl(status) }}
+          </div>
+          <div style="background: #000; color: #fff;">
+            {{ data }}
           </div>
         </Message>
         <ProgressSpinner
@@ -74,6 +77,9 @@ onMounted(() => {
 .canvas-overlay {
   opacity: 0;
 }
+.video-feed {
+  object-fit: none;
+}
 
 .canvas-overlay,
 .video-feed {
@@ -82,24 +88,27 @@ onMounted(() => {
   left: 50%;
   transform: translate(-50%,-50%) rotateY(180deg);
   max-width: 100%;
-  @media all and (max-width: 480px) {
-    max-width: 480px;
-  }
 }
 
 .target-box {
   position: absolute;
   inset: 0;
-  background: var(--secondary-500);
-  -webkit-mask-image: radial-gradient(circle, transparent 40%, black 40.1%);
-  mask-image: radial-gradient(circle, transparent 40%, black 40.1%);
+  background: rgba(3, 3, 3, .2);
+  backdrop-filter: blur(10px);
+  -webkit-mask-image: radial-gradient(ellipse 55% 42% at 50% 50%, transparent 0%, transparent 70%, black 70.1%, black 100%);
+  mask-image: radial-gradient(ellipse 55% 42% at 50% 50%, transparent 0%, transparent 70%, black 70.1%, black 100%);
   -webkit-mask-composite: destination-out;
   mask-composite: exclude;
+
   pointer-events: none;
   display: flex;
   flex-direction: column;
   gap: 2rem;
   padding: 2rem;
+  @include media-min($tablet) {
+    -webkit-mask-image: radial-gradient(ellipse 40% 45% at 50% 50%, transparent 0%, transparent 70%, black 70.1%, black 100%);
+    mask-image: radial-gradient(ellipse 40% 45% at 50% 50%, transparent 0%, transparent 70%, black 70.1%, black 100%);
+  }
 }
 
 .status-wrapper {

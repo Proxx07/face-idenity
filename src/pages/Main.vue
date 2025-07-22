@@ -43,7 +43,7 @@ const restartVideo = (manual: boolean) => {
     });
   }
 };
-const reloadPage = () => {
+const reloadPage = async () => {
   document.location.reload();
 };
 
@@ -67,7 +67,9 @@ onBeforeUnmount(() => {
     />
     <div v-if="videoError" class="error-wrapper">
       <h3>
-        Не удалось запустить камеру. <br> Попбробуйте обновить страницу.
+        Не удалось запустить камеру. <br>
+        Попбробуйте обновить страницу. <br>
+        И убедитесь что приложение имеет доступ к камере.
       </h3>
 
       <Button severity="primary" label="Обновить" size="large" :icon="reload" icon-pos="right" @click="reloadPage" />
