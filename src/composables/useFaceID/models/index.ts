@@ -23,3 +23,28 @@ export const getCenter = (points: IPoint[]) => {
 export const getDistance = (a: IPoint, b: IPoint) => {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 };
+
+export const takePhoto = async (canvas: HTMLCanvasElement, video: HTMLVideoElement): Promise<string> => {
+  const size = {
+    width: video.clientWidth,
+    height: video.clientHeight,
+  };
+
+  const ctx = canvas.getContext('2d')!;
+  ctx.save();
+  ctx.translate(size.width, 0);
+  ctx.scale(-1, 1);
+
+  ctx.drawImage(video, 0, 0, size.width, size.height);
+
+  ctx.restore();
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const photoUrl = URL.createObjectURL(blob);
+      ctx.clearRect(0, 0, size.width, size.height);
+      resolve(photoUrl);
+    }, 'image/png');
+  });
+};

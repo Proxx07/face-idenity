@@ -9,7 +9,7 @@ import { useFaceID } from '@/composables/useFaceID';
 const props = defineProps<IProps>();
 const emit = defineEmits<IEmits>();
 
-const { video, overlay, status, loading: faceIdInitializing, progressValue, faceIdInit } = useFaceID(props, emit);
+const { video, overlay, status, loading: faceIdInitializing, progressValue, bgImage, faceIdInit } = useFaceID(props, emit);
 
 const messageSeverity = computed<MessageProps['severity']>(() => {
   if (faceIdInitializing.value) return 'info';
@@ -24,6 +24,7 @@ onMounted(() => {
 
 <template>
   <div class="video-wrapper">
+    <div class="blur-bg" :style="{ '--bg': `url(${bgImage})` }" />
     <video ref="video" autoplay muted playsinline class="video-feed" />
     <canvas ref="overlay" class="canvas-overlay" />
     <div class="target-box">
@@ -46,7 +47,6 @@ onMounted(() => {
           value-color="var(--p-green-500)"
         />
       </div>
-
       <Button
         v-if="responseStatus"
         severity="primary"
@@ -86,11 +86,18 @@ onMounted(() => {
     max-width: 480px;
   }
 }
-
+.blur-bg {
+  position: absolute;
+  inset: 0;
+  background-image: var(--bg);
+  background-position: center;
+  background-size: cover;
+}
 .target-box {
   position: absolute;
   inset: 0;
-  background: var(--secondary-500);
+  background: rgba(3, 3, 3, 0.5);
+  backdrop-filter: blur(20px);
   -webkit-mask-image: radial-gradient(circle, transparent 40%, black 40.1%);
   mask-image: radial-gradient(circle, transparent 40%, black 40.1%);
   -webkit-mask-composite: destination-out;

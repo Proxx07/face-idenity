@@ -1,7 +1,7 @@
 import type { IEmits, IProps, TStatus } from './types';
 import * as faceapi from 'face-api.js';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { getCenter, getDistance, TOLERANCE } from './models';
+import { getCenter, getDistance, takePhoto, TOLERANCE } from './models';
 
 export const useFaceID = (_: IProps, emit: IEmits) => {
   let interval: ReturnType<typeof setInterval>;
@@ -10,14 +10,13 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
   const status = ref<TStatus>('noFace');
   const video = ref<HTMLVideoElement>();
   const overlay = ref<HTMLCanvasElement>();
+  const bgImage = ref<string>('');
 
   const loading = ref<boolean>(true);
   const progressInterval = ref<ReturnType<typeof setInterval>>();
   const progressValue = ref<number>(0);
 
-  const photoProcessing = computed(() => {
-    return progressValue.value === 100;
-  });
+  const photoProcessing = computed(() => progressValue.value === 100);
 
   const resetProgressInterval = () => {
     if (!progressInterval.value || photoProcessing.value) return;
@@ -26,36 +25,17 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     progressInterval.value = undefined;
   };
 
-  const takePicture = () => {
-    if (!overlay.value) return;
-    const ctx = overlay.value.getContext('2d')!;
-    ctx.save();
-
-    ctx.translate(size.width, 0);
-    ctx.scale(-1, 1);
-
-    ctx.drawImage(video.value!, 0, 0, size.width, size.height);
-
-    ctx.restore();
-
-    overlay.value.toBlob((blob) => {
-      if (!blob) return;
-      const photoUrl = URL.createObjectURL(blob);
-      emit('photo-taken', photoUrl);
-      ctx.clearRect(0, 0, size.width, size.height);
-
-      progressValue.value = 0;
-      progressInterval.value = undefined;
-    }, 'image/png');
-  };
-
   const setProgressInterval = () => {
     if (progressInterval.value || photoProcessing.value) return;
     progressInterval.value = setInterval(() => {
       progressValue.value += 20;
       if (photoProcessing.value) {
-        takePicture();
-        clearInterval(progressInterval.value);
+        takePhoto(overlay.value!, video.value!).then((photoUrl) => {
+          emit('photo-taken', photoUrl);
+          clearInterval(progressInterval.value);
+          progressValue.value = 0;
+          progressInterval.value = undefined;
+        });
       }
     }, 200);
   };
@@ -168,8 +148,14 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
 
         faceapi.matchDimensions(overlay.value, size);
         loading.value = false;
+        setTimeout(() => {
+          takePhoto(overlay.value!, video.value!).then((imageUrl) => {
+            bgImage.value = imageUrl;
+          });
+        }, 100);
         interval = setInterval(facePointsCalc, 200);
       };
+      video.value.onloadeddata;
     }
 
     // eslint-disable-next-line unused-imports/no-unused-vars
@@ -194,6 +180,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     overlay,
     progressValue,
     loading,
+    bgImage,
     faceIdInit,
   };
 };
