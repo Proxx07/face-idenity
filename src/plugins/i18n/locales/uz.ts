@@ -4,6 +4,7 @@ export default {
     example: 'Test str {name}',
   },
 
+  loading: 'Yuklanmoqda...',
   noFace: 'Yuz aniqlanmadi!',
   offCenter: 'Iltimos, yuzingizni markazga joylashtiring.',
   tilted: 'Iltimos, boshingizni tik tuting.',

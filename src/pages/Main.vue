@@ -1,28 +1,34 @@
 <script setup lang="ts">
 import { Button } from 'primevue';
-import { onBeforeMount, ref } from 'vue';
+import { onBeforeMount, onBeforeUnmount, ref } from 'vue';
 import { reload } from '@/assets/icons';
 import FaceId from '@/components/FaceId/index.vue';
 
 const restartVideoSourceCount = ref(0);
-const faceIdActive = ref(true);
+const faceIdActive = ref<boolean>(true);
+
 const videoError = ref(false);
 const photoChecking = ref(false);
 
 const responseStatus = ref<string>('');
 
+const handleCameraActive = () => {
+  faceIdActive.value = !document.hidden;
+};
+
 const handlePhoto = (image: string) => {
   photoChecking.value = true;
+  setTimeout(() => {
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = 'photo.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-  const link = document.createElement('a');
-  link.href = image;
-  link.download = 'photo.png';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  responseStatus.value = 'success';
-  photoChecking.value = false;
+    responseStatus.value = 'success';
+    photoChecking.value = false;
+  }, 3000);
 };
 const restartVideo = (manual: boolean) => {
   faceIdActive.value = false;
@@ -42,13 +48,16 @@ const reloadPage = () => {
 };
 
 onBeforeMount(() => {
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
+  document.addEventListener('visibilitychange', handleCameraActive);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', handleCameraActive);
 });
 </script>
 
 <template>
-  <div class="main-page">
+  <div class="main-page face-id-page">
     <FaceId
       v-if="faceIdActive && !videoError"
       :loading="photoChecking"

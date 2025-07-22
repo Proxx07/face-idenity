@@ -4,6 +4,7 @@ export default {
     example: 'Example page {name}',
   },
 
+  loading: 'Loading...',
   noFace: 'Face not detected!',
   offCenter: 'Please center your face.',
   tilted: 'Please keep your head straight.',

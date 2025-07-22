@@ -1,14 +1,21 @@
 <script setup lang="ts">
+import type { MessageProps } from 'primevue/message';
 import type { IEmits, IProps } from '@/composables/useFaceID/types';
 import { Button, Knob, Message, ProgressSpinner } from 'primevue';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { reload } from '@/assets/icons';
 import { useFaceID } from '@/composables/useFaceID';
 
 const props = defineProps<IProps>();
 const emit = defineEmits<IEmits>();
 
-const { video, overlay, status, progressValue, faceIdInit } = useFaceID(props, emit);
+const { video, overlay, status, loading: faceIdInitializing, progressValue, faceIdInit } = useFaceID(props, emit);
+
+const messageSeverity = computed<MessageProps['severity']>(() => {
+  if (faceIdInitializing.value) return 'info';
+  if (status.value === 'ok') return 'success';
+  return 'error';
+});
 
 onMounted(() => {
   faceIdInit();
@@ -21,9 +28,9 @@ onMounted(() => {
     <canvas ref="overlay" class="canvas-overlay" />
     <div class="target-box">
       <div class="status-wrapper">
-        <Message v-if="!props.responseStatus" :severity="status === 'ok' ? 'success' : 'error'" class="message">
+        <Message v-if="!props.responseStatus" :severity="messageSeverity" class="message">
           <div class="font-18-b">
-            {{ $tl(status) }}
+            {{ faceIdInitializing ? $tl('loading') : $tl(status) }}
           </div>
         </Message>
         <ProgressSpinner
@@ -106,9 +113,7 @@ onMounted(() => {
 }
 .message {
   --p-message-content-padding: 1rem 1.2rem;
-  max-width: 270px;
   width: 100%;
-  margin-right: auto;
   :deep(.p-message-content) {
     justify-content: center;
     text-align: center;

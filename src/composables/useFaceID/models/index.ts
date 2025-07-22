@@ -1,7 +1,7 @@
 import type { IPoint } from 'face-api.js';
 
 export const TOLERANCE = {
-  center: 40,
+  center: 50,
   tilt: 10,
   turn: 20,
   gaze: 20,

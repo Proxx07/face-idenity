@@ -11,6 +11,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
   const video = ref<HTMLVideoElement>();
   const overlay = ref<HTMLCanvasElement>();
 
+  const loading = ref<boolean>(true);
   const progressInterval = ref<ReturnType<typeof setInterval>>();
   const progressValue = ref<number>(0);
 
@@ -140,6 +141,14 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     }
   };
 
+  const resetStream = () => {
+    if (!video.value || !video.value.srcObject) return;
+    const tracks = (video.value.srcObject as MediaStream).getTracks();
+    if (tracks && tracks.length) {
+      tracks.forEach(track => track.stop());
+    }
+  };
+
   const faceIdInit = async () => {
     try {
       await faceapi.nets.tinyFaceDetector.loadFromUri('/cv-models');
@@ -158,7 +167,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
         size.height = overlay.value.height;
 
         faceapi.matchDimensions(overlay.value, size);
-
+        loading.value = false;
         interval = setInterval(facePointsCalc, 200);
       };
     }
@@ -172,12 +181,11 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
 
   onBeforeUnmount(() => {
     clearInterval(interval);
+    resetStream();
   });
 
   watch(photoProcessing, (value) => {
-    if (value) {
-      clearInterval(interval);
-    }
+    if (value) clearInterval(interval);
   });
 
   return {
@@ -185,6 +193,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     status,
     overlay,
     progressValue,
+    loading,
     faceIdInit,
   };
 };
