@@ -155,7 +155,6 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
         }, 100);
         interval = setInterval(facePointsCalc, 200);
       };
-      video.value.onloadeddata;
     }
 
     // eslint-disable-next-line unused-imports/no-unused-vars
