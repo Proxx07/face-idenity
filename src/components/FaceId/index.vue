@@ -83,11 +83,9 @@ onMounted(() => {
   flex-grow: 1;
   overflow: hidden;
 }
-
 .canvas-overlay {
   opacity: 0;
 }
-
 .canvas-overlay,
 .video-feed {
   position: absolute;

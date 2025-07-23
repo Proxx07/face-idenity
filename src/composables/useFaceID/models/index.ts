@@ -7,9 +7,11 @@ export const TOLERANCE = {
   gaze: 20,
   gazeSkew: 0.10,
 
-  mouthOpen: 15,
-  mouthWide: 60,
+  mouthOpen: 30,
+  mouthWide: 120,
   eyeNarrow: 5,
+
+  faceBoxSquare: [85000, 110000],
 };
 
 export const getCenter = (points: IPoint[]) => {

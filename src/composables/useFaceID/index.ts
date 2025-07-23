@@ -48,6 +48,18 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     const dx = Math.abs(centerX - size.width / 2);
     const dy = Math.abs(centerY - size.height / 2);
 
+    const boxSquare = box.width * box.height;
+
+    if (boxSquare < TOLERANCE.faceBoxSquare[0]) {
+      status.value = 'tooFar';
+      return;
+    }
+
+    if (boxSquare > TOLERANCE.faceBoxSquare[1]) {
+      status.value = 'tooFar';
+      return;
+    }
+
     const landmarks = resized.landmarks;
 
     const leftEyePoints = landmarks.getLeftEye();

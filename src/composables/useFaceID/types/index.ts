@@ -1,4 +1,4 @@
-export type TStatus = 'noFace' | 'offCenter' | 'tilted' | 'turned' | 'notLooking' | 'makingFaces' | 'ok';
+export type TStatus = 'noFace' | 'tooClose' | 'tooFar' | 'offCenter' | 'tilted' | 'turned' | 'notLooking' | 'makingFaces' | 'ok';
 
 export interface IEmits {
   (e: 'restart'): void
