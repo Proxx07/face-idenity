@@ -30,16 +30,15 @@ const handlePhoto = (image: string) => {
     photoChecking.value = false;
   }, 3000);
 };
-const restartVideo = (manual: boolean) => {
+const restartVideo = () => {
   faceIdActive.value = false;
-  if (manual) responseStatus.value = '';
-  if (!manual && restartVideoSourceCount.value === 3) {
+  if (restartVideoSourceCount.value === 3) {
     videoError.value = true;
   }
   else {
     setTimeout(() => {
       faceIdActive.value = true;
-      restartVideoSourceCount.value = manual ? 0 : restartVideoSourceCount.value + 1;
+      restartVideoSourceCount.value++;
     });
   }
 };
@@ -64,6 +63,7 @@ onBeforeUnmount(() => {
       :response-status="responseStatus"
       @restart="restartVideo"
       @photo-taken="handlePhoto"
+      @face-id-refreshed="responseStatus = ''"
     />
     <div v-if="videoError" class="error-wrapper">
       <h3>

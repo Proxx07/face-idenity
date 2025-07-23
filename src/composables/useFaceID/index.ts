@@ -1,6 +1,6 @@
 import type { IEmits, IProps, TStatus } from './types';
 import * as faceapi from 'face-api.js';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import { getCenter, getDistance, takePhoto, TOLERANCE } from './models';
 
 export const useFaceID = (_: IProps, emit: IEmits) => {
@@ -12,32 +12,20 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
   const overlay = ref<HTMLCanvasElement>();
   const bgImage = ref<string>('');
 
-  const loading = ref<boolean>(true);
-  const progressInterval = ref<ReturnType<typeof setInterval>>();
-  const progressValue = ref<number>(0);
+  const initializing = ref<boolean>(true);
 
-  const photoProcessing = computed(() => progressValue.value === 100);
-
-  const resetProgressInterval = () => {
-    if (!progressInterval.value || photoProcessing.value) return;
-    clearInterval(progressInterval.value);
-    progressValue.value = 0;
-    progressInterval.value = undefined;
+  const resetStream = () => {
+    if (!video.value || !video.value.srcObject) return;
+    const tracks = (video.value.srcObject as MediaStream).getTracks();
+    if (tracks && tracks.length) {
+      tracks.forEach(track => track.stop());
+    }
   };
 
-  const setProgressInterval = () => {
-    if (progressInterval.value || photoProcessing.value) return;
-    progressInterval.value = setInterval(() => {
-      progressValue.value += 20;
-      if (photoProcessing.value) {
-        takePhoto(overlay.value!, video.value!).then((photoUrl) => {
-          emit('photo-taken', photoUrl);
-          clearInterval(progressInterval.value);
-          progressValue.value = 0;
-          progressInterval.value = undefined;
-        });
-      }
-    }, 200);
+  const handlePhotoUpload = async () => {
+    const photo = await takePhoto(overlay.value!, video.value!);
+    emit('photo-taken', photo);
+    clearInterval(interval);
   };
 
   const facePointsCalc = async () => {
@@ -112,33 +100,17 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     else {
       status.value = 'ok';
     }
-
-    if (status.value === 'ok') {
-      setProgressInterval();
-    }
-    else {
-      resetProgressInterval();
-    }
-  };
-
-  const resetStream = () => {
-    if (!video.value || !video.value.srcObject) return;
-    const tracks = (video.value.srcObject as MediaStream).getTracks();
-    if (tracks && tracks.length) {
-      tracks.forEach(track => track.stop());
-    }
   };
 
   const faceIdInit = async () => {
     try {
       await faceapi.nets.tinyFaceDetector.loadFromUri('/cv-models');
       await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/cv-models');
-
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (!video.value) return;
       video.value.srcObject = stream;
 
-      video.value.onloadeddata = () => {
+      video.value.onloadeddata = async () => {
         if (!overlay.value) return;
         overlay.value.width = video.value!.clientWidth;
         overlay.value.height = video.value!.clientHeight;
@@ -147,21 +119,24 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
         size.height = overlay.value.height;
 
         faceapi.matchDimensions(overlay.value, size);
-        loading.value = false;
-        setTimeout(() => {
-          takePhoto(overlay.value!, video.value!).then((imageUrl) => {
-            bgImage.value = imageUrl;
-          });
-        }, 100);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const photoUrl = await takePhoto(overlay.value, video.value!);
+        bgImage.value = photoUrl;
+        initializing.value = false;
         interval = setInterval(facePointsCalc, 200);
       };
     }
 
     // eslint-disable-next-line unused-imports/no-unused-vars
     catch (error: unknown) {
-      emit('restart', false);
+      emit('restart');
       if (interval) clearInterval(interval);
     }
+  };
+
+  const refreshFaceDetection = () => {
+    interval = setInterval(facePointsCalc, 200);
+    emit('face-id-refreshed');
   };
 
   onBeforeUnmount(() => {
@@ -169,17 +144,14 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     resetStream();
   });
 
-  watch(photoProcessing, (value) => {
-    if (value) clearInterval(interval);
-  });
-
   return {
     video,
     status,
     overlay,
-    progressValue,
-    loading,
+    initializing,
     bgImage,
     faceIdInit,
+    handlePhotoUpload,
+    refreshFaceDetection,
   };
 };
