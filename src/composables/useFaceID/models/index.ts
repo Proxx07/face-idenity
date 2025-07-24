@@ -1,4 +1,5 @@
 import type { IPoint } from 'face-api.js';
+import type { INoseBoxArea } from '@/composables/useFaceID/types';
 
 export const TOLERANCE = {
   center: 50,
@@ -7,11 +8,27 @@ export const TOLERANCE = {
   gaze: 20,
   gazeSkew: 0.10,
 
-  mouthOpen: 30,
-  mouthWide: 120,
+  mouthOpen: 45,
+  mouthWide: 130,
   eyeNarrow: 5,
+};
 
-  faceBoxSquare: [85000, 110000],
+const constraints: MediaStreamConstraints = {
+  audio: false,
+  video: {
+    facingMode: 'user',
+    aspectRatio: 9 / 16,
+    width: { min: Math.min(800, window.innerWidth), max: Math.min(800, window.innerWidth) },
+    height: { min: window.innerHeight, max: window.innerHeight },
+  },
+};
+
+export const setConstraint = (): MediaStreamConstraints => {
+  if (window.innerWidth >= 720) return constraints;
+  return {
+    audio: false,
+    video: true,
+  };
 };
 
 export const getCenter = (points: IPoint[]) => {
@@ -24,6 +41,23 @@ export const getCenter = (points: IPoint[]) => {
 
 export const getDistance = (a: IPoint, b: IPoint) => {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+};
+
+export const setNoseBoxArea = (size: { width: number, height: number }): INoseBoxArea => {
+  const xStart = size.width / 2 - size.width / 16;
+  const xEnd = xStart + size.width / 8;
+
+  const yStart = size.height / 2 - size.height * 0.03;
+  const yEnd = yStart + size.height / 6;
+
+  return { x: [xStart, xEnd], y: [yStart, yEnd] };
+};
+
+export const preferableSquare = (size: { width: number, height: number }): [number, number] => {
+  const width = size.width * 45 / 100;
+  const height = size.height * 55 / 100;
+  const square = width * height;
+  return [square * 0.9, square * 1.1];
 };
 
 export const takePhoto = async (canvas: HTMLCanvasElement, video: HTMLVideoElement): Promise<string> => {

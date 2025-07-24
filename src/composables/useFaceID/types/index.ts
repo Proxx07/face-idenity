@@ -10,3 +10,8 @@ export interface IProps {
   loading: boolean
   responseStatus?: string
 }
+
+export interface INoseBoxArea {
+  x: [number, number]
+  y: [number, number]
+}

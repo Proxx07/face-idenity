@@ -1,11 +1,13 @@
-import type { IEmits, IProps, TStatus } from './types';
+import type { IEmits, INoseBoxArea, IProps, TStatus } from './types';
 import * as faceapi from 'face-api.js';
 import { onBeforeUnmount, ref } from 'vue';
-import { getCenter, getDistance, takePhoto, TOLERANCE } from './models';
+import { getCenter, getDistance, preferableSquare, setConstraint, setNoseBoxArea, takePhoto, TOLERANCE } from './models';
 
 export const useFaceID = (_: IProps, emit: IEmits) => {
   let interval: ReturnType<typeof setInterval>;
   const size = { width: 0, height: 0 };
+  let noseBoxArea: INoseBoxArea;
+  let squareBounds: [number, number];
 
   const status = ref<TStatus>('noFace');
   const video = ref<HTMLVideoElement>();
@@ -34,6 +36,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
       .withFaceLandmarks(true);
 
     if (!overlay.value) return;
+    if (initializing.value) initializing.value = false;
     if (!detection) return status.value = 'noFace';
 
     const resized = faceapi.resizeResults(detection, size);
@@ -43,39 +46,47 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
 
     const box = resized.detection.box;
     const centerX = box.x + box.width / 2;
-    const centerY = box.y + box.height / 2;
-
-    const dx = Math.abs(centerX - size.width / 2);
-    const dy = Math.abs(centerY - size.height / 2);
-
     const boxSquare = box.width * box.height;
+    if (!squareBounds) squareBounds = preferableSquare(size);
 
-    if (boxSquare < TOLERANCE.faceBoxSquare[0]) {
+    if (boxSquare < squareBounds[0]) {
       status.value = 'tooFar';
       return;
     }
 
-    if (boxSquare > TOLERANCE.faceBoxSquare[1]) {
-      status.value = 'tooFar';
+    if (boxSquare > squareBounds[1]) {
+      status.value = 'tooClose';
       return;
     }
 
     const landmarks = resized.landmarks;
+
+    const nose = getCenter(landmarks.getNose());
+    if (!noseBoxArea) noseBoxArea = setNoseBoxArea(size);
+    if (nose.x < noseBoxArea.x[0] || nose.x > noseBoxArea.x[1] || nose.y < noseBoxArea.y[0] || nose.y > noseBoxArea.y[1]) {
+      status.value = 'offCenter';
+      return;
+    }
 
     const leftEyePoints = landmarks.getLeftEye();
     const rightEyePoints = landmarks.getRightEye();
     const leftEye = getCenter(leftEyePoints);
     const rightEye = getCenter(rightEyePoints);
     const eyeTilt = Math.abs(leftEye.y - rightEye.y);
+    if (eyeTilt > TOLERANCE.tilt) {
+      status.value = 'tilted';
+      return;
+    }
+
     const leftEyeWidth = getDistance(leftEyePoints[0], leftEyePoints[3]);
     const rightEyeWidth = getDistance(rightEyePoints[0], rightEyePoints[3]);
     const eyeRatio = Math.abs(leftEyeWidth - rightEyeWidth) / Math.max(leftEyeWidth, rightEyeWidth);
 
     const jaw = landmarks.getJawOutline();
     const faceCenterX = (jaw[0].x + jaw[16].x) / 2;
+
     const headTurn = Math.abs(faceCenterX - centerX);
 
-    const nose = getCenter(landmarks.getNose());
     const eyeCenterX = (leftEye.x + rightEye.x) / 2;
     const gazeOffset = Math.abs(nose.x - eyeCenterX);
 
@@ -94,13 +105,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
 
     const isMakingFaces = isMouthTooOpen || isMouthTooWide || isEyesTooNarrow;
 
-    if (dx > TOLERANCE.center || dy > TOLERANCE.center) {
-      status.value = 'offCenter';
-    }
-    else if (eyeTilt > TOLERANCE.tilt) {
-      status.value = 'tilted';
-    }
-    else if (headTurn > TOLERANCE.turn) {
+    if (headTurn > TOLERANCE.turn) {
       status.value = 'turned';
     }
     else if (gazeOffset > TOLERANCE.gaze || eyeRatio > TOLERANCE.gazeSkew) {
@@ -118,7 +123,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     try {
       await faceapi.nets.tinyFaceDetector.loadFromUri('/cv-models');
       await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/cv-models');
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia(setConstraint());
       if (!video.value) return;
       video.value.srcObject = stream;
 
@@ -130,12 +135,14 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
         size.width = overlay.value.width;
         size.height = overlay.value.height;
 
+        noseBoxArea = setNoseBoxArea(size);
+        squareBounds = preferableSquare(size);
+
         faceapi.matchDimensions(overlay.value, size);
         await new Promise(resolve => setTimeout(resolve, 100));
         const photoUrl = await takePhoto(overlay.value, video.value!);
         bgImage.value = photoUrl;
-        initializing.value = false;
-        interval = setInterval(facePointsCalc, 200);
+        interval = setInterval(facePointsCalc, 300);
       };
     }
 

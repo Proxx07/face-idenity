@@ -14,6 +14,7 @@ const {
   video, overlay, status,
   initializing, bgImage, faceIdInit,
   handlePhotoUpload, refreshFaceDetection,
+  noseCenterPosition,
 } = useFaceID(props, emit);
 
 const messageSeverity = computed<MessageProps['severity']>(() => {
@@ -66,13 +67,13 @@ onMounted(() => {
         @click="refreshFaceDetection"
       />
     </div>
+    <div class="span" />
   </div>
 </template>
 
 <style scoped lang="scss">
 .round {
   position: absolute;
-
 }
 .video-wrapper {
   position: relative;
@@ -109,15 +110,25 @@ onMounted(() => {
   inset: 0;
   background: rgba(3, 3, 3, 0.5);
   backdrop-filter: blur(20px);
-  -webkit-mask-image: radial-gradient(circle, transparent 40%, black 40.1%);
-  mask-image: radial-gradient(circle, transparent 40%, black 40.1%);
   -webkit-mask-composite: destination-out;
   mask-composite: exclude;
+  /* round mask
+  -webkit-mask-image: radial-gradient(circle, transparent 40%, black 40.1%);
+  mask-image: radial-gradient(circle, transparent 40%, black 40.1%);
+  round mask end*/
   pointer-events: none;
   display: flex;
   flex-direction: column;
   gap: 2rem;
   padding: 2rem;
+  // ellipse mask
+  -webkit-mask-image: radial-gradient(ellipse 55% 42% at 50% 50%, transparent 0%, transparent 70%, black 70.1%, black 100%);
+  mask-image: radial-gradient(ellipse 55% 42% at 50% 50%, transparent 0%, transparent 70%, black 70.1%, black 100%);
+  @include media-min($tablet) {
+    -webkit-mask-image: radial-gradient(ellipse 40% 45% at 50% 50%, transparent 0%, transparent 70%, black 70.1%, black 100%);
+    mask-image: radial-gradient(ellipse 40% 45% at 50% 50%, transparent 0%, transparent 70%, black 70.1%, black 100%);
+  }
+  // ellipse mask end
 }
 
 .status-wrapper {
