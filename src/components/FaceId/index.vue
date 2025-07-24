@@ -14,7 +14,6 @@ const {
   video, overlay, status,
   initializing, bgImage, faceIdInit,
   handlePhotoUpload, refreshFaceDetection,
-  noseCenterPosition,
 } = useFaceID(props, emit);
 
 const messageSeverity = computed<MessageProps['severity']>(() => {
