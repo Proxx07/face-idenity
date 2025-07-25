@@ -1,7 +1,16 @@
 import type { IEmits, INoseBoxArea, IProps, ISquare, TStatus } from './types';
 import * as faceapi from 'face-api.js';
 import { onBeforeUnmount, ref } from 'vue';
-import { getCenter, getDistance, preferableSquare, setConstraint, setNoseBoxArea, takePhoto, TOLERANCE } from './models';
+import {
+  FACE_ID_INTERVALS_DELAY,
+  getCenter,
+  getDistance,
+  preferableSquare,
+  setConstraint,
+  setNoseBoxArea,
+  takePhoto,
+  TOLERANCE,
+} from './models';
 
 export const useFaceID = (_: IProps, emit: IEmits) => {
   let interval: ReturnType<typeof setInterval>;
@@ -94,15 +103,11 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     const leftEyeWidth = getDistance(leftEyePoints[0], leftEyePoints[3]);
     const rightEyeWidth = getDistance(rightEyePoints[0], rightEyePoints[3]);
     const eyeRatio = Math.abs(leftEyeWidth - rightEyeWidth) / Math.max(leftEyeWidth, rightEyeWidth);
-
     const jaw = landmarks.getJawOutline();
     const faceCenterX = (jaw[0].x + jaw[16].x) / 2;
-
     const headTurn = Math.abs(faceCenterX - centerX);
-
     const eyeCenterX = (leftEye.x + rightEye.x) / 2;
     const gazeOffset = Math.abs(nose.x - eyeCenterX);
-
     if (headTurn > TOLERANCE.turn) {
       status.value = 'turned';
     }
@@ -137,7 +142,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
         await new Promise(resolve => setTimeout(resolve, 100));
         const photoUrl = await takePhoto(overlay.value, video.value!);
         bgImage.value = photoUrl;
-        interval = setInterval(facePointsCalc, 250);
+        interval = setInterval(facePointsCalc, FACE_ID_INTERVALS_DELAY);
       };
     }
 
@@ -149,7 +154,7 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
   };
 
   const refreshFaceDetection = () => {
-    interval = setInterval(facePointsCalc, 200);
+    interval = setInterval(facePointsCalc, FACE_ID_INTERVALS_DELAY);
     emit('face-id-refreshed');
   };
 

@@ -1,6 +1,8 @@
 import type { IPoint } from 'face-api.js';
 import type { INoseBoxArea, ISquare } from '@/composables/useFaceID/types';
 
+export const FACE_ID_INTERVALS_DELAY = 250;
+
 export const TOLERANCE = {
   tilt: 10,
   turn: 20,
