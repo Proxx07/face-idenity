@@ -1,4 +1,4 @@
-export type TStatus = 'noFace' | 'tooClose' | 'tooFar' | 'offCenter' | 'tilted' | 'turned' | 'notLooking' | 'makingFaces' | 'ok';
+export type TStatus = 'noFace' | 'tooClose' | 'tooFar' | 'offCenter' | 'tilted' | 'turned' | 'notLooking' | 'mouthOpened' | 'smiling' | 'ok';
 
 export interface IEmits {
   (e: 'restart'): void
@@ -14,4 +14,11 @@ export interface IProps {
 export interface INoseBoxArea {
   x: [number, number]
   y: [number, number]
+}
+
+export interface ISquare {
+  width: number
+  height: number
+  faceSquareMin: number
+  faceSquareMax: number
 }

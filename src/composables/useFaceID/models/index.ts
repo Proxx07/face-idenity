@@ -1,16 +1,11 @@
 import type { IPoint } from 'face-api.js';
-import type { INoseBoxArea } from '@/composables/useFaceID/types';
+import type { INoseBoxArea, ISquare } from '@/composables/useFaceID/types';
 
 export const TOLERANCE = {
-  center: 50,
   tilt: 10,
   turn: 20,
   gaze: 20,
   gazeSkew: 0.10,
-
-  mouthOpen: 45,
-  mouthWide: 130,
-  eyeNarrow: 5,
 };
 
 const constraints: MediaStreamConstraints = {
@@ -53,11 +48,15 @@ export const setNoseBoxArea = (size: { width: number, height: number }): INoseBo
   return { x: [xStart, xEnd], y: [yStart, yEnd] };
 };
 
-export const preferableSquare = (size: { width: number, height: number }): [number, number] => {
+export const preferableSquare = (size: { width: number, height: number }): ISquare => {
   const width = size.width * 45 / 100;
   const height = size.height * 55 / 100;
   const square = width * height;
-  return [square * 0.9, square * 1.1];
+  return {
+    width, height,
+    faceSquareMin: square * 1.01,
+    faceSquareMax: square * 1.48,
+  };
 };
 
 export const takePhoto = async (canvas: HTMLCanvasElement, video: HTMLVideoElement): Promise<string> => {

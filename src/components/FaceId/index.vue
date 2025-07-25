@@ -11,9 +11,8 @@ const props = defineProps<IProps>();
 const emit = defineEmits<IEmits>();
 
 const {
-  video, overlay, status,
-  initializing, bgImage, faceIdInit,
-  handlePhotoUpload, refreshFaceDetection,
+  video, overlay, status, initializing, bgImage,
+  faceIdInit, handlePhotoUpload, refreshFaceDetection,
 } = useFaceID(props, emit);
 
 const messageSeverity = computed<MessageProps['severity']>(() => {

@@ -1,4 +1,4 @@
-import type { IEmits, INoseBoxArea, IProps, TStatus } from './types';
+import type { IEmits, INoseBoxArea, IProps, ISquare, TStatus } from './types';
 import * as faceapi from 'face-api.js';
 import { onBeforeUnmount, ref } from 'vue';
 import { getCenter, getDistance, preferableSquare, setConstraint, setNoseBoxArea, takePhoto, TOLERANCE } from './models';
@@ -6,8 +6,8 @@ import { getCenter, getDistance, preferableSquare, setConstraint, setNoseBoxArea
 export const useFaceID = (_: IProps, emit: IEmits) => {
   let interval: ReturnType<typeof setInterval>;
   const size = { width: 0, height: 0 };
+  let square: ISquare;
   let noseBoxArea: INoseBoxArea;
-  let squareBounds: [number, number];
 
   const status = ref<TStatus>('noFace');
   const video = ref<HTMLVideoElement>();
@@ -32,39 +32,52 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
 
   const facePointsCalc = async () => {
     const detection = await faceapi
-      .detectSingleFace(video.value!, new faceapi.TinyFaceDetectorOptions())
+      .detectSingleFace(video.value!, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.7 }))
       .withFaceLandmarks(true);
 
     if (!overlay.value) return;
     if (initializing.value) initializing.value = false;
     if (!detection) return status.value = 'noFace';
 
-    const resized = faceapi.resizeResults(detection, size);
-    if (!resized) return;
+    faceapi.draw.drawFaceLandmarks(overlay.value, detection.landmarks);
 
-    /* faceapi.draw.drawFaceLandmarks(overlay.value, resized); */
-
-    const box = resized.detection.box;
+    const box = detection.detection.box;
     const centerX = box.x + box.width / 2;
     const boxSquare = box.width * box.height;
-    if (!squareBounds) squareBounds = preferableSquare(size);
 
-    if (boxSquare < squareBounds[0]) {
+    if (!square) square = preferableSquare(size);
+
+    if (boxSquare < square.faceSquareMin) {
       status.value = 'tooFar';
       return;
     }
 
-    if (boxSquare > squareBounds[1]) {
+    if (boxSquare > square.faceSquareMax) {
       status.value = 'tooClose';
       return;
     }
 
-    const landmarks = resized.landmarks;
+    const landmarks = detection.landmarks;
 
     const nose = getCenter(landmarks.getNose());
     if (!noseBoxArea) noseBoxArea = setNoseBoxArea(size);
     if (nose.x < noseBoxArea.x[0] || nose.x > noseBoxArea.x[1] || nose.y < noseBoxArea.y[0] || nose.y > noseBoxArea.y[1]) {
       status.value = 'offCenter';
+      return;
+    }
+
+    const mouth = landmarks.getMouth();
+    const mouthTop = getCenter([mouth[13], mouth[14]]); // верхняя губа
+    const mouthBottom = getCenter([mouth[17], mouth[18]]); // нижняя губа
+    const mouthHeight = getDistance(mouthTop, mouthBottom);
+    const mouthWidth = getDistance(mouth[0], mouth[6]);
+
+    if (mouthHeight > square.height * 0.05) {
+      status.value = 'mouthOpened';
+      return;
+    }
+    if (mouthWidth > box.width * 0.28) {
+      status.value = 'smiling';
       return;
     }
 
@@ -90,29 +103,11 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
     const eyeCenterX = (leftEye.x + rightEye.x) / 2;
     const gazeOffset = Math.abs(nose.x - eyeCenterX);
 
-    const mouth = landmarks.getMouth();
-    const mouthTop = getCenter([mouth[13], mouth[14]]); // верхняя губа
-    const mouthBottom = getCenter([mouth[17], mouth[18]]); // нижняя губа
-    const mouthOpen = getDistance(mouthTop, mouthBottom);
-    const mouthWidth = getDistance(mouth[0], mouth[6]);
-
-    const leftEyeOpen = getDistance(leftEyePoints[1], leftEyePoints[5]);
-    const rightEyeOpen = getDistance(rightEyePoints[1], rightEyePoints[5]);
-
-    const isMouthTooOpen = mouthOpen > TOLERANCE.mouthOpen;
-    const isMouthTooWide = mouthWidth > TOLERANCE.mouthWide;
-    const isEyesTooNarrow = leftEyeOpen < TOLERANCE.eyeNarrow || rightEyeOpen < TOLERANCE.eyeNarrow;
-
-    const isMakingFaces = isMouthTooOpen || isMouthTooWide || isEyesTooNarrow;
-
     if (headTurn > TOLERANCE.turn) {
       status.value = 'turned';
     }
     else if (gazeOffset > TOLERANCE.gaze || eyeRatio > TOLERANCE.gazeSkew) {
       status.value = 'notLooking';
-    }
-    else if (isMakingFaces) {
-      status.value = 'makingFaces';
     }
     else {
       status.value = 'ok';
@@ -135,14 +130,14 @@ export const useFaceID = (_: IProps, emit: IEmits) => {
         size.width = overlay.value.width;
         size.height = overlay.value.height;
 
+        square = preferableSquare(size);
         noseBoxArea = setNoseBoxArea(size);
-        squareBounds = preferableSquare(size);
 
         faceapi.matchDimensions(overlay.value, size);
         await new Promise(resolve => setTimeout(resolve, 100));
         const photoUrl = await takePhoto(overlay.value, video.value!);
         bgImage.value = photoUrl;
-        interval = setInterval(facePointsCalc, 300);
+        interval = setInterval(facePointsCalc, 250);
       };
     }
 

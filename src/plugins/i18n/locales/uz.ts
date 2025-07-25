@@ -12,6 +12,7 @@ export default {
   tilted: 'Iltimos, boshingizni tik tuting.',
   turned: 'Iltimos, yuzingizni to‘g‘ridan-to‘g‘ri kameraga qarating.',
   notLooking: 'Iltimos, to‘g‘ri kameraga qarang.',
-  makingFaces: 'Iltimos, yuz ifodangizni tinchlantiring.',
+  mouthOpened: 'Iltimos, oq‘zingizni yoping.',
+  smiling: 'Iltimos, kulmang.',
   ok: 'Yaxshi, harakatsiz turing!',
 };
